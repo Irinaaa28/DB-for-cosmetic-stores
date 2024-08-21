@@ -1,0 +1,220 @@
+--Proiect baze de date
+--Coman Irina, 133
+
+--ex 12
+
+/*Cerinta 1: Sa se afiseze codul, numele si prenumele angajatului care a efectuat cele mai multe vanzari. De asemenea, sa se afiseze
+si codul si numele orasului in care se afla magazinul in care lucreaza acest angajat. Daca exista mai multi angajati cu acelasi 
+numar de vanzari, se va afisa primul in ordine descrescatoare dupa codul angajatului.
+
+Acest exercițiu respectă următoarele cerințe:
+b) subcereri nesincronizate în clauza FROM (from (...) top_angajat)
+c) grupări de date (group by ID_Angajat) și funcții grup (count)
+d) ordonări (order by 2 desc, 1)
+f)  utilizarea a cel puțin 1 bloc de cerere (with top_angajati as (...))*/
+
+with top_angajati as (select ID_Angajat, count(ID_Vanzare) nr_vanzari --functie grup count
+                    from VINDE
+                    group by ID_Angajat --grupare
+                    order by 2 desc, 1)  --with .. as ..
+select ID_Angajat, Nume_Angajat, Prenume_Angajat, ID_Oras, Nume_Oras
+from (select ta.ID_Angajat, Nume_Angajat, Prenume_Angajat, o.ID_Oras, o.Nume_Oras, nr_vanzari
+        from top_angajati ta join ANGAJAT a on ta.ID_Angajat = a.ID_Angajat
+                            join LUCREAZA l on a.ID_Angajat = l.ID_Angajat
+                            join MAGAZIN m on l.ID_Magazin = m.ID_Magazin
+                            join ORAS o on m.ID_Oras = o.ID_Oras
+        order by nr_vanzari desc, ID_Angajat desc) top_angajat --order by , subcerere nesincronizata in clauza from (from (...) top_angajat)
+where rownum = 1;
+
+/*Cerinta 2: Sa se afiseze codul, numele complet si un mesaj particular al angajatilor care au efectuat vanzari pana pe data de 15 februarie 2024 si al caror prenume
+incepe cu 'A' si codul, numele complet si un mesaj particular al clientilor care au facut vanzari dupa data de 15 februarie 2024. La angajati, mesajul particular
+consta in afisarea sumei totale a vanzarii pentru angajatii cu nume de familie care se termina in 'n', afisarea produsului vandut pentru angajatii cu nume de 
+familie care se termina in 'u', iar -1 in orice alt caz. La clienti, mesajul particular consta in afisarea sumei totale a vanzarii pentru clientii cu prenume care
+se termina in 'a', afisarea produsului vandut pentru clientii cu prenume care se termina in 'n', iar -1 in orice alt caz. Datele vor fi afisate in ordine crescatoare
+dupa numele persoanelor.
+
+Acest exercițiu respectă următoarele cerințe: 
+     d) ordonări (order by 2) și utilizarea funcțiilor NVL (nvl(null, -1)) și DECODE (decode(substr(Nume_Angajat, -1), 'n', Suma_totala, 'u', ID_Produs, nvl(null, -1)) mesaj_particular) (în cadrul aceleiași cereri) 
+     e) utilizarea a cel puțin 2 funcții pe șiruri de caractere(concat, upper), o funcție pe date calendaristice(to_date('15-FEB-2024', 'dd-mon-yyyy')) */
+
+select distinct a.ID_Angajat, concat(concat(Nume_Angajat, ' '), Prenume_Angajat) Nume_Complet, decode(substr(Nume_Angajat, -1), 'n', Suma_totala, 'u', ID_Produs, nvl(null, -1)) mesaj_particular
+from ANGAJAT a join VINDE v on a.ID_Angajat = v.ID_Angajat --order by, nvl, decode  --concat
+               join VANZARE va on v.ID_Vanzare = va.ID_Vanzare
+where va.Data_Vanzare <= to_date('15-FEB-2024', 'dd-mon-yyyy')  --to_date
+and upper(Prenume_Angajat) like 'A%' --upper
+union
+select distinct c.ID_Client, concat(concat(Nume_Client, ' '), Prenume_Client) Nume_Complet, decode(substr(Prenume_Client, -1), 'a', Suma_totala, 'n', ID_Produs, nvl(null, -1)) mesaj_particular
+from CLIENT c join VINDE v on c.ID_Client = v.ID_Client
+              join VANZARE va on v.ID_Vanzare = va.ID_Vanzare
+where to_char(va.Data_Vanzare, 'dd-MON-yyyy') >= to_date('15-FEB-2024', 'dd-mon-yyyy')
+order by 2;
+    
+/*Cerinta 3: Sa se afiseze numele angajatilor si numarul total de vanzari efectuate de acestia, pentru angajatii care au realizat vanzari 
+totale cu o valoare mai mare decat valoarea medie a vanzarilor din toate orasele. Sa se ordoneze rezultatele dupa numarul total de vanzari
+in ordine descrescatoare. In plus, sa se eticheteze angajatii in functie de performanta lor astfel: 'Ridicata' pentru cei care au
+efectuat mai mult de 2 vanzari, 'Medie' pentru cei cu 2 vanzari si 'Scazuta' pentru cei cu mai putin de 2 vanzari.
+
+Acest exercițiu respectă următoarele cerințe: 
+     b) subcereri nesincronizate în clauza FROM 
+     c) grupări de date, funcții grup, filtrare la nivel de grupuri cu subcereri nesincronizate (în clauza de HAVING) în care intervin cel puțin 3 tabele (in cadrul aceleiași cereri)
+     d) ordonări (order by Total_Vanzari desc)
+     e) utilizarea unei expresii CASE */
+
+select a.Nume_Angajat, a.Prenume_Angajat, count(v.ID_Vanzare) as Total_Vanzari, case 
+                                                                                    when count(v.ID_Vanzare) > 2 then 'Ridicata'
+                                                                                    when count(v.ID_Vanzare) = 2 then 'Medie'
+                                                                                    else 'Scazuta'
+                                                                                end as Performanta --case  --functia grup count
+from ANGAJAT a join VINDE v on a.ID_Angajat = v.ID_Angajat
+               join VANZARE va on v.ID_Vanzare = va.ID_Vanzare
+group by a.Nume_Angajat, a.Prenume_Angajat
+having sum(va.Suma_Totala) > (select avg(t.Valoare_Totala) --subcerere nesincronizata in clauza having in care intervin 3 tabele    --functia grup avg
+                                    from (select sum(va1.Suma_Totala) as Valoare_Totala --functia grup sum
+                                          from VINDE v1 join VANZARE va1 on v1.ID_Vanzare = va1.ID_Vanzare
+                                                        join ANGAJAT a1 on v1.ID_Angajat = a1.ID_Angajat
+                                          group by v1.ID_Angajat) t) --subcerere nesincronizata in clauza from (from (...) t)  --grupare
+order by Total_Vanzari desc; --order by
+
+/*Cerinta 4: Sa se afiseze codul, valoarea totala, starea si un mesaj particular comenzilor care au minimum 6 luni de cand au fost plasate si care
+au fost plasate de un magazin aflat intr-un oras care are cel putin 2 magazine. Pentru comenzile livrate, mesajul particular consta in afisarea numelui
+magazinului caruia a fost livrata comanda, iar pentru cele anulate se va afisa numele furnizorului caruia i-a fost plasata comanda.
+
+Acest exercițiu respectă următoarele cerințe: 
+     c) grupări de date, funcții grup
+     e) utilizarea unei funcții pe date calendaristice(add_months), a unei expresii CASE */
+
+select c.ID_Comanda, c.Valoare_Totala, r.Stare_Comanda, case
+                                                        when r.Stare_Comanda = 'Livrata' then m.Nume_Magazin
+                                                        when r.Stare_Comanda = 'Anulata' then f.Nume_furnizor
+                                                    end as Nume_magazin_furnizor  --case
+from COMANDA c join RECEPTIONEAZA r on r.ID_Comanda = c.ID_Comanda
+               join FURNIZOR f on f.ID_Furnizor = r.ID_Furnizor
+               join MAGAZIN m on c.ID_Magazin = m.ID_Magazin
+               join ORAS o on m.ID_Oras = o.ID_Oras
+where c.Data_Comanda <= add_months(sysdate, -6) --add_months
+and o.ID_Oras in (select ID_Oras 
+                  from MAGAZIN 
+                  group by ID_Oras  --grupare
+                  having count(ID_Magazin) >= 2);  --functie grup count
+
+/*Cerinta 5: Sa se afiseze codul, data de livrare si valoarea totala a comenzilor date de magazine care au cel putin 2 angajati si un manager
+care s-a angajat inainte de 15 martie 2020 si care are litera 'o' in numele de familie.
+
+Acest exercițiu respectă următoarele cerințe: 
+     a) subcereri sincronizate în care intervin cel puțin 3 tabele 
+     e) utilizarea unei funcții pe date calendaristice(to_date) */
+
+select c.ID_Comanda, c.Data_Livrare, c.Valoare_Totala
+from COMANDA c join MAGAZIN m on c.ID_Magazin = m.ID_Magazin
+where m.ID_Magazin in (select l.ID_Magazin
+                       from LUCREAZA l join ANGAJAT a on l.ID_Angajat = a.ID_Angajat
+                                       join MANAGER mg on a.ID_Manager = mg.ID_Manager
+                       where (select count(*) --functie grup count
+                              from LUCREAZA l2
+                              where l2.ID_Magazin = l.ID_Magazin) >= 2
+                        and mg.ID_Magazin = m.ID_Magazin
+                        and mg.Data_Angajare < to_date('15-03-2020', 'DD-MM-YYYY')  --to_date
+                        and mg.Nume_Manager like '%o%') --subcerere sincronizata in care intervin 3 tabele
+order by c.Data_Livrare; --ordonare
+
+--ex 13
+
+/*1. Sa se actualizeze pozitia angajatilor in tabelul LUCREAZA in 'Angajatul lunii' pentru angajatii care au suma totala
+a vanzarilor mai mare decat media vanzarilor tuturor angajatilor*/
+
+update LUCREAZA
+set Pozitie = 'Angajatul lunii'
+where ID_Angajat in (select ID_Angajat
+                     from (select ID_Angajat, sum(Suma_Totala) as total_vanzari
+                            from VINDE v join VANZARE va on v.ID_Vanzare = va.ID_Vanzare
+                            group by ID_Angajat)  totaluri
+                     where total_vanzari > (select avg(total_vanzari)
+                                            from  (select sum(Suma_Totala) as total_vanzari
+                                                    from VINDE v join VANZARE va on v.ID_Vanzare = va.ID_Vanzare
+                                                    group by ID_Angajat) medie_totala));
+                                                    
+select * from LUCREAZA;
+
+/*2. Sa se actualizeze email-urile managerilor cu noul format Nume_Manager + ID_Manager + @magazin + prima cifra din ID_Manager + .ro pentru
+managerii care gestioneaza magazine cu cel putin 2 angajati*/
+
+update MANAGER
+set Email_Manager = concat(concat(concat(concat(lower(Nume_Manager), ID_Manager), '@magazin'), substr(ID_Manager, 1, 1)), '.ro')
+where ID_Manager in (select m.ID_Manager
+                     from MANAGER m join MAGAZIN mg on m.ID_Magazin = mg.ID_Magazin
+                                    join LUCREAZA l on mg.ID_Magazin = l.ID_Magazin
+                     group by m.ID_Manager
+                     having count(l.ID_Angajat) >= 2);
+                     
+select * from MANAGER;
+
+/*3. Sa se stearga orasele in care nu se afla niciun magazin.*/
+
+delete from ORAS
+where ID_Oras not in (select ID_Oras
+                      from MAGAZIN);    
+rollback to save1; 
+                      
+--ex 14: Vizualizare complexa
+
+create view ViewMagazin as
+select a.ID_Angajat, a.Nume_Angajat, a.Prenume_Angajat, a.Data_Angajare_A, a.Email_Angajat, m.ID_Manager, m.Nume_Manager, m.Prenume_Manager, m.Data_Angajare, mg.ID_Magazin, mg.Nume_Magazin
+from ANGAJAT a join LUCREAZA l on a.ID_Angajat = l.ID_Angajat
+               join MAGAZIN mg on l.ID_Magazin = mg.ID_Magazin
+               join ORAS o on mg.ID_Oras = o.ID_Oras
+               join MANAGER m on mg.ID_Magazin = m.ID_Magazin
+               left outer join VINDE v on a.ID_Angajat = v.ID_Angajat
+               join VANZARE va on v.ID_Vanzare = va.ID_Vanzare
+where lower(o.Nume_Oras) = 'bucuresti'              
+group by a.ID_Angajat, a.Nume_Angajat, a.Prenume_Angajat, a.Data_Angajare_A, a.Email_Angajat, m.ID_Manager, m.Nume_Manager, m.Prenume_Manager, m.Data_Angajare, mg.ID_Magazin, mg.Nume_Magazin
+having count(va.ID_Vanzare) >= 1;
+
+select * from ViewMagazin;
+
+--Exemplu de operatie LMD permisa
+select *
+from ViewMagazin
+where lower(Nume_Angajat) like '%u%';
+
+--Exemplu de operatie LMD nepermisa
+insert into ViewMagazin 
+(ID_Angajat, Nume_Angajat, Prenume_Angajat, Data_Angajare_A, Email_Angajat, ID_Manager, Nume_Manager, Prenume_Manager, Data_Angajare, ID_Magazin, Nume_Magazin)
+values (111, 'Petrescu', 'Alina', sysdate, 'petrescu.alina@magazin.ro', 400, 'Vasilescu', 'Elena', '01-APR-2020', 17634, 'Sevora Central');
+
+rollback;
+drop view ViewMagazin;
+
+--ex 15
+
+/*Outer join: Sa se afiseze toate magazinele, managerii, angajatii si comenzile, chiar daca anumite legaturi lipsesc,
+pentru a avea o vedere completa a tuturor datelor. */
+
+select nvl(nvl(nvl(mg.ID_Magazin, m.ID_Magazin), l.ID_Magazin), c.ID_Magazin) as ID_Magazin, mg.Nume_Magazin, 
+    m.ID_Manager, m.Nume_Manager, m.Prenume_Manager, a.ID_Angajat, a.Nume_Angajat, a.Prenume_Angajat, c.ID_Comanda, c.Valoare_Totala
+from MAGAZIN mg full outer join MANAGER m on mg.ID_Magazin = m.ID_Magazin
+                full outer join LUCREAZA l on mg.ID_Magazin = l.ID_Magazin or m.ID_Magazin = l.ID_Magazin
+                full outer join ANGAJAT a on l.ID_Angajat = a.ID_Angajat
+                full outer join COMANDA c on mg.ID_Magazin = c.ID_Magazin;
+                
+/*Division: Sa se afiseze angajatii care au efectuat vanzari si care lucreaza in magazine care se afla in orasul cu ID-ul 2793.*/
+
+select a.ID_Angajat, a.Nume_Angajat
+from ANGAJAT a
+where not exists (select 1
+                  from MAGAZIN m
+                  where m.ID_Oras = 2793
+                  and not exists (select 1
+                                  from VINDE v join LUCREAZA l on v.ID_Angajat = l.ID_Angajat
+                                               join MAGAZIN m2 on l.ID_Magazin = m2.ID_Magazin
+                                  where m2.ID_Oras = m.ID_Oras
+                                  and v.ID_Angajat = a.ID_Angajat));
+
+/*Analiza top-n: Sa se afiseze primii 5 angajati care au realizat cele mai mari vanzari in functie de valoarea totala a comenzilor.*/
+
+select ID_Angajat, Nume_Angajat, Prenume_Angajat, Total_Vanzari
+from (select a.ID_Angajat, a.Nume_Angajat, a.Prenume_Angajat, sum(va.Suma_Totala) as Total_Vanzari
+      from ANGAJAT a join VINDE v ON a.ID_Angajat = v.ID_Angajat
+                     join VANZARE va on v.ID_Vanzare = va.ID_Vanzare
+      group by a.ID_Angajat, a.Nume_Angajat, a.Prenume_Angajat
+      order by Total_Vanzari desc) top
+where rownum <= 5;

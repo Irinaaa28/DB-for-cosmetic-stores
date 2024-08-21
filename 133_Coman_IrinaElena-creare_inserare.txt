@@ -1,0 +1,384 @@
+--Proiect baze de date
+--Coman Irina, 133
+
+--ex.10: Crearea unei secven?e ce va fi utilizat? în inserarea înregistr?rilor în tabele (punctul 11).
+CREATE SEQUENCE ORAS_SEQ START WITH 1;
+CREATE SEQUENCE MAGAZIN_SEQ START WITH 1;
+CREATE SEQUENCE ANGAJAT_SEQ START WITH 1;
+CREATE SEQUENCE MANAGER_SEQ START WITH 1;
+CREATE SEQUENCE FURNIZOR_SEQ START WITH 1;
+CREATE SEQUENCE PRODUS_SEQ START WITH 1;
+CREATE SEQUENCE CLIENT_SEQ START WITH 1;
+CREATE SEQUENCE COMANDA_SEQ START WITH 1;
+CREATE SEQUENCE VANZARE_SEQ START WITH 1;
+CREATE SEQUENCE RECEPTIONEAZA_SEQ START WITH 1;  
+CREATE SEQUENCE LUCREAZA_SEQ START WITH 1;       
+CREATE SEQUENCE VINDE_SEQ START WITH 1;          
+
+--ex.11: Crearea tabelelor în SQL si inserarea de date coerente in fiecare dintre acestea (minimum
+--5 înregistrari în fiecare tabel neasociativ; minimum 10 înregistrari în tabelele asociative; 
+--maxim 30 de înregistrari în fiecare tabel).
+
+CREATE TABLE ORAS(
+    ID_Oras NUMBER(5) CONSTRAINT PK_ORAS PRIMARY KEY,
+    Nume_Oras VARCHAR2(100) CONSTRAINT NN_Nume_Oras NOT NULL,
+    Regiune VARCHAR2(100),
+    Cod_Postal VARCHAR2(10)
+);
+
+INSERT INTO ORAS (ID_Oras, Nume_Oras, Regiune, Cod_Postal) VALUES (2793, 'Bucuresti', 'Muntenia', '302813');
+INSERT INTO ORAS (ID_Oras, Nume_Oras, Regiune, Cod_Postal) VALUES (3292, 'Cluj-Napoca', 'Transilvania', '481462');
+INSERT INTO ORAS (ID_Oras, Nume_Oras, Regiune, Cod_Postal) VALUES (1761, 'Timisoara', 'Banat', '379430');
+INSERT INTO ORAS (ID_Oras, Nume_Oras, Regiune, Cod_Postal) VALUES (3829, 'Iasi', 'Moldova', '705227');
+INSERT INTO ORAS (ID_Oras, Nume_Oras, Regiune, Cod_Postal) VALUES (5386, 'Constanta', 'Dobrogea', '947832');
+
+select * from ORAS;
+
+savepoint save1;
+
+CREATE TABLE MAGAZIN(
+    ID_Magazin NUMBER(5) CONSTRAINT PK_MAGAZIN PRIMARY KEY,
+    Nume_Magazin VARCHAR2(100) CONSTRAINT NN_Nume_Magazin NOT NULL,
+    Adresa_Magazin VARCHAR2(100),
+    ID_Oras NUMBER(5) CONSTRAINT FK_MAGAZIN_ORAS REFERENCES ORAS(ID_Oras)
+);
+
+ALTER TABLE MAGAZIN
+ADD CONSTRAINT UK_Nume_Magazin UNIQUE (Nume_Magazin);
+
+ALTER TABLE MAGAZIN
+DROP CONSTRAINT FK_MAGAZIN_ORAS;
+
+ALTER TABLE MAGAZIN
+ADD CONSTRAINT FK_MAGAZIN_ORAS
+FOREIGN KEY (ID_Oras)
+REFERENCES ORAS(ID_Oras)
+ON DELETE SET NULL;
+
+INSERT INTO MAGAZIN (ID_Magazin, Nume_Magazin, Adresa_Magazin, ID_Oras) VALUES (17634, 'Sevora Central', 'Str. Libertatii nr. 12', 2793);
+INSERT INTO MAGAZIN (ID_Magazin, Nume_Magazin, Adresa_Magazin, ID_Oras) VALUES (28637, 'Sevora Nord', 'Str. Garii nr. 5', 3292);
+INSERT INTO MAGAZIN (ID_Magazin, Nume_Magazin, Adresa_Magazin, ID_Oras) VALUES (34902, 'Sevora Sud', 'Str. Florilor nr. 8', 2793);
+INSERT INTO MAGAZIN (ID_Magazin, Nume_Magazin, Adresa_Magazin, ID_Oras) VALUES (47644, 'Sevora Est', 'Str. Mihai Viteazu nr. 20', 5386);
+INSERT INTO MAGAZIN (ID_Magazin, Nume_Magazin, Adresa_Magazin, ID_Oras) VALUES (52831, 'Sevora Vest', 'Str. Victoriei nr. 15', 2793);
+
+select * from MAGAZIN;
+
+CREATE TABLE MANAGER(
+    ID_Manager NUMBER(5) CONSTRAINT PK_MANAGER PRIMARY KEY,
+    Nume_Manager VARCHAR2(100) CONSTRAINT NN_Nume_Manager NOT NULL,
+    Prenume_Manager VARCHAR2(100) CONSTRAINT NN_Prenume_Manager NOT NULL,
+    Email_Manager VARCHAR2(100) CONSTRAINT NN_Email_Manager NOT NULL,
+    Data_Angajare DATE CONSTRAINT NN_Data_Angajare NOT NULL,
+    ID_Magazin NUMBER(5) CONSTRAINT FK_MANAGER_MAGAZIN REFERENCES MAGAZIN(ID_Magazin)
+);
+
+ALTER TABLE MANAGER
+DROP CONSTRAINT FK_MANAGER_MAGAZIN;
+
+ALTER TABLE MANAGER
+ADD CONSTRAINT FK_MANAGER_MAGAZIN
+FOREIGN KEY (ID_Magazin)
+REFERENCES MAGAZIN(ID_Magazin)
+ON DELETE SET NULL;
+
+INSERT INTO MANAGER (ID_Manager, Nume_Manager, Prenume_Manager, Email_Manager, Data_Angajare, ID_Magazin) 
+VALUES (100, 'Popescu', 'Ion', 'ion.popescu@magazin.ro', DATE '2020-01-01', 47644);
+INSERT INTO MANAGER (ID_Manager, Nume_Manager, Prenume_Manager, Email_Manager, Data_Angajare, ID_Magazin) 
+VALUES (200, 'Ionescu', 'Maria', 'maria.ionescu@magazin.ro', DATE '2020-02-01', 28637);
+INSERT INTO MANAGER (ID_Manager, Nume_Manager, Prenume_Manager, Email_Manager, Data_Angajare, ID_Magazin) 
+VALUES (300, 'Georgescu', 'Andrei', 'andrei.georgescu@magazin.ro', DATE '2020-03-01', 52831);
+INSERT INTO MANAGER (ID_Manager, Nume_Manager, Prenume_Manager, Email_Manager, Data_Angajare, ID_Magazin) 
+VALUES (400, 'Vasilescu', 'Elena', 'elena.vasilescu@magazin.ro', DATE '2020-04-01', 17634);
+INSERT INTO MANAGER (ID_Manager, Nume_Manager, Prenume_Manager, Email_Manager, Data_Angajare, ID_Magazin) 
+VALUES (500, 'Dumitrescu', 'Cristina', 'cristina.dumitrescu@magazin.ro', DATE '2020-05-01', 34902);
+
+select * from MANAGER;
+
+CREATE TABLE ANGAJAT(
+    ID_Angajat NUMBER(5) CONSTRAINT PK_ANGAJAT PRIMARY KEY,
+    Nume_Angajat VARCHAR2(100) CONSTRAINT NN_Nume_Angajat NOT NULL,
+    Prenume_Angajat VARCHAR2(100) CONSTRAINT NN_Prenume_Angajat NOT NULL,
+    Email_Angajat VARCHAR2(100) CONSTRAINT NN_Email_Angajat NOT NULL,
+    Data_Angajare_A DATE CONSTRAINT NN_Data_Angajare_A NOT NULL,
+    ID_Manager NUMBER(5) CONSTRAINT FK_ANGAJAT_MANAGER REFERENCES MANAGER(ID_Manager)
+);
+
+ALTER TABLE ANGAJAT DROP CONSTRAINT FK_ANGAJAT_MANAGER;
+
+ALTER TABLE ANGAJAT
+ADD CONSTRAINT FK_ANGAJAT_MANAGER FOREIGN KEY (ID_Manager)
+REFERENCES MANAGER(ID_Manager) ON DELETE SET NULL;
+
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(101, 'Mihai', 'Alexandru', 'alexandru.mihai@magazin.ro', DATE '2021-01-14', 100);
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(102, 'Popa', 'Roxana', 'roxana.popa@magazin.ro', DATE '2021-02-07', 200);
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(103, 'Stan', 'Daniel', 'daniel.stan@magazin.ro', DATE '2021-03-21', 300);
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(104, 'Iliescu', 'Ioana', 'ioana.iliescu@magazin.ro', DATE '2021-04-20', 400);
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(105, 'Radu', 'Marius', 'marius.radu@magazin.ro', DATE '2021-05-10', 500);
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(106, 'Neagu', 'Adriana', 'adriana.neagu@magazin.ro', DATE '2021-06-24', 300);
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(107, 'Lazar', 'Cosmin', 'cosmin.lazar@magazin.ro', DATE '2021-07-19', 400);
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(108, 'Voicu', 'Gabriel', 'gabriel.voicu@magazin.ro', DATE '2021-08-12', 400);
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(109, 'Marin', 'Ana', 'ana.marin@magazin.ro', DATE '2021-09-21', 200);
+INSERT INTO ANGAJAT (ID_Angajat, Nume_Angajat, Prenume_Angajat, Email_Angajat, Data_Angajare_A, ID_Manager) VALUES 
+(110, 'Constantin', 'Lucian', 'lucian.constantin@magazin.ro', DATE '2021-10-25', 500);
+
+select * from ANGAJAT;
+
+CREATE TABLE PRODUS(
+    ID_Produs NUMBER(5) CONSTRAINT PK_PRODUS PRIMARY KEY,
+    Nume_Produs VARCHAR2(100) CONSTRAINT NN_Nume_Produs NOT NULL,
+    Brand VARCHAR2(100),
+    Pret NUMBER(10, 2) CONSTRAINT NN_Pret NOT NULL,
+    Stoc NUMBER(5) CONSTRAINT NN_Stoc NOT NULL
+);
+
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (15327, 'Fond de ten', 'Estee Lauder', 190.50, 100);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (78432, 'Ruj Color Sensational', 'Maybelline', 40.00, 200);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (31475, 'Mascara Lash Paradise', 'LOreal', 45.75, 150);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (42435, 'Pudra Translucenta', 'Clinique', 130.00, 300);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (53113, 'Paleta de Farduri', 'Urban Decay', 275.00, 250);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (63782, 'Sampon Elseve', 'LOreal', 22.00, 120);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (78245, 'Balsam de Par Hydra Source', 'Biolage', 62.50, 180);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (89213, 'Spray Fixativ Elnett', 'LOreal', 18.00, 140);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (93456, 'Fond de ten Double Wear', 'Estee Lauder', 195.00, 130);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (10234, 'Creion de Ochi Super Liner', 'LOreal', 17.00, 160);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (11324, 'Ruj Matte Ink', 'Maybelline', 35.00, 170);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (12456, 'Paleta de Contur', 'Anastasia Beverly Hills', 245.00, 90);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (13579, 'Ser pentru Par Frizz Ease', 'John Frieda', 125.50, 110);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (14789, 'Mascara Better Than Sex', 'Too Faced', 159.00, 100);
+INSERT INTO PRODUS (ID_Produs, Nume_Produs, Brand, Pret, Stoc) VALUES (15987, 'Creion de Sprancene Brow Wiz', 'Anastasia Beverly Hills', 83.00, 130);
+
+select * from PRODUS;
+
+CREATE TABLE COMANDA(
+    ID_Comanda NUMBER(10) CONSTRAINT PK_COMANDA PRIMARY KEY,
+    Data_Comanda DATE CONSTRAINT NN_Data_Comanda NOT NULL,
+    Data_Livrare DATE,
+    Valoare_Totala NUMBER(10, 2),
+    ID_Magazin NUMBER(5) CONSTRAINT FK_COMANDA_MAGAZIN REFERENCES MAGAZIN(ID_Magazin),
+    ID_Produs NUMBER(5) CONSTRAINT FK_COMANDA_PRODUS REFERENCES PRODUS(ID_Produs)
+);
+
+ALTER TABLE COMANDA
+DROP CONSTRAINT FK_COMANDA_MAGAZIN;
+
+ALTER TABLE COMANDA
+ADD CONSTRAINT FK_COMANDA_MAGAZIN FOREIGN KEY (ID_Magazin) 
+REFERENCES MAGAZIN(ID_Magazin)ON DELETE SET NULL;
+
+ALTER TABLE COMANDA
+DROP CONSTRAINT FK_COMANDA_PRODUS;
+
+ALTER TABLE COMANDA
+ADD CONSTRAINT FK_COMANDA_PRODUS FOREIGN KEY (ID_Produs) 
+REFERENCES PRODUS(ID_Produs)ON DELETE SET NULL;
+
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (6731983147, DATE '2022-01-15', DATE '2022-01-20', 1050.00, 28637, 78245);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (4729864671, DATE '2022-01-18', DATE '2022-01-23', 4000.00, 34902, 53113);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (3287346409, DATE '2023-01-21', DATE '2023-01-26', 2362.50, 52831, 89213);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (4682289382, DATE '2023-01-25', DATE '2023-01-30', 9000.00, 52831, 42435);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (5643764201, DATE '2023-01-28', DATE '2023-02-02', 6250.00, 47644, 13579);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (6721983197, DATE '2023-02-01', DATE '2023-02-06', 3200.00, 17634, 10234);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (5732964683, DATE '2023-02-03', DATE '2023-02-08', 2750.00, 34902, 31475);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (4987346490, DATE '2023-02-05', DATE '2023-02-10', 3400.00, 17634, 78432);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (4182289352, DATE '2023-02-08', DATE '2023-02-13', 2850.00, 34902, 93456);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (5343764210, DATE '2023-02-10', DATE '2023-02-15', 1500.00, 28637, 11324);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (6021983147, DATE '2024-02-12', DATE '2024-02-17', 4700.00, 47644, 12456);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (5729864672, DATE '2024-02-14', DATE '2024-02-19', 5900.00, 28637, 15327);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (5287346410, DATE '2024-02-16', DATE '2024-02-21', 4100.00, 52831, 63782);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (4782289383, DATE '2024-02-18', DATE '2024-02-23', 3500.00, 17634, 14789);
+INSERT INTO COMANDA (ID_Comanda, Data_Comanda, Data_Livrare, Valoare_Totala, ID_Magazin, ID_Produs) VALUES (5643764211, DATE '2024-02-20', DATE '2024-02-25', 4500.00, 17634, 15987);
+
+select * from COMANDA;
+
+CREATE TABLE FURNIZOR(
+    ID_Furnizor NUMBER(10) CONSTRAINT PK_FURNIZOR PRIMARY KEY,
+    Nume_Furnizor VARCHAR2(100) CONSTRAINT NN_Nume_Furnizor NOT NULL,
+    Adresa_Furnizor VARCHAR2(200),
+    Email_Furnizor VARCHAR2(100),
+    Telefon VARCHAR2(15)
+);
+
+INSERT INTO FURNIZOR (ID_Furnizor, Nume_Furnizor, Adresa_Furnizor, Email_Furnizor, Telefon) VALUES 
+(378261, 'Furnizor Makeup', 'Str. Progresului nr. 134', 'contact@furnizormakeup.ro', '0721378261');
+INSERT INTO FURNIZOR (ID_Furnizor, Nume_Furnizor, Adresa_Furnizor, Email_Furnizor, Telefon) VALUES 
+(402864, 'Furnizor Creme Fata', 'Str. Tudor Vladimirescu nr. 29', 'contact@furnizorcremefata.ro', '0721402864');
+INSERT INTO FURNIZOR (ID_Furnizor, Nume_Furnizor, Adresa_Furnizor, Email_Furnizor, Telefon) VALUES 
+(729462, 'Furnizor Creme Corp', 'Str. Capitan Aviator Alexandru Serbanescu nr. 50', 'contact@furnizorcremecorp.ro', '0721729462');
+INSERT INTO FURNIZOR (ID_Furnizor, Nume_Furnizor, Adresa_Furnizor, Email_Furnizor, Telefon) VALUES 
+(382394, 'Furnizor Produse Par', 'Str. Nicolae Caramfil nr. 25', 'contact@furnizorprodusepar.ro', '0721382394');
+INSERT INTO FURNIZOR (ID_Furnizor, Nume_Furnizor, Adresa_Furnizor, Email_Furnizor, Telefon) VALUES 
+(738621, 'Furnizor Produse Styling', 'Str. Academiei nr. 28', 'contact@furnizorprodusestyling.ro', '0721738621');
+
+select * from FURNIZOR;
+
+
+CREATE TABLE VANZARE(
+    ID_Vanzare NUMBER(10) CONSTRAINT PK_VANZARE PRIMARY KEY,
+    Data_Vanzare DATE CONSTRAINT NN_Data_Vanzare NOT NULL,
+    Suma_Totala NUMBER(10, 2) CONSTRAINT NN_Suma_Totala NOT NULL,
+    ID_Produs NUMBER(5) CONSTRAINT FK_VANZARE_PRODUS REFERENCES PRODUS(ID_Produs)
+);
+
+ALTER TABLE VANZARE
+DROP CONSTRAINT FK_VANZARE_PRODUS;
+
+ALTER TABLE VANZARE
+ADD CONSTRAINT FK_VANZARE_PRODUS FOREIGN KEY (ID_Produs) 
+REFERENCES PRODUS(ID_Produs)ON DELETE SET NULL;
+
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (17854032, DATE '2024-02-01', 62.50, 78245);
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (25684596, DATE '2024-02-05', 18.00, 89213);
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (32153543, DATE '2024-02-10', 45.75, 31475);
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (48046263, DATE '2024-02-15', 125.50, 13579);
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (55315628, DATE '2024-02-20', 40.00, 78432);
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (63415764, DATE '2024-02-25', 35.00, 11324);
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (74523695, DATE '2024-03-01', 245.00, 12456);
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (85780893, DATE '2024-03-05', 22.00, 63782);
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (94696243, DATE '2024-03-10', 195.00, 93456);
+INSERT INTO VANZARE (ID_Vanzare, Data_Vanzare, Suma_Totala, ID_Produs) VALUES (10826538, DATE '2024-03-15', 190.50, 15327);
+
+select * from VANZARE;
+
+CREATE TABLE CLIENT(
+    ID_Client NUMBER(5) CONSTRAINT PK_CLIENT PRIMARY KEY,
+    Nume_Client VARCHAR2(100) CONSTRAINT NN_Nume_Client NOT NULL,
+    Prenume_Client VARCHAR2(100) CONSTRAINT NN_Prenume_Client NOT NULL
+);
+
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (1965, 'Moldovan', 'Cristian');
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (2439, 'Popescu', 'Alina');
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (3576, 'Stan', 'Vasile');
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (4920, 'Ionescu', 'Mihaela');
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (5864, 'Dumitru', 'Andrei');
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (6326, 'Georgescu', 'Elena');
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (7983, 'Radu', 'Mihai');
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (8028, 'Marin', 'Ana');
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (9254, 'Pavel', 'Ioan');
+INSERT INTO CLIENT (ID_Client, Nume_Client, Prenume_Client) VALUES (1029, 'Barbu', 'Laura');
+
+select * from CLIENT;
+
+CREATE TABLE RECEPTIONEAZA(
+    ID_Furnizor NUMBER(10),
+    ID_Comanda NUMBER(10),
+    Data_Primire DATE CONSTRAINT NN_Data_Primire NOT NULL,
+    Stare_Comanda VARCHAR2(50),
+    Cantitate NUMBER(5),
+    CONSTRAINT PK_RECEPTIONEAZA PRIMARY KEY (ID_Furnizor, ID_Comanda),
+    CONSTRAINT FK_RECEPTIONEAZA_FURNIZOR FOREIGN KEY (ID_Furnizor) REFERENCES FURNIZOR(ID_Furnizor),
+    CONSTRAINT FK_RECEPTIONEAZA_COMANDA FOREIGN KEY (ID_Comanda) REFERENCES COMANDA(ID_Comanda)
+);
+
+ALTER TABLE RECEPTIONEAZA DROP CONSTRAINT FK_RECEPTIONEAZA_FURNIZOR;
+
+ALTER TABLE RECEPTIONEAZA
+ADD CONSTRAINT FK_RECEPTIONEAZA_FURNIZOR FOREIGN KEY (ID_Furnizor)
+REFERENCES FURNIZOR(ID_Furnizor) ON DELETE SET NULL;
+
+ALTER TABLE RECEPTIONEAZA DROP CONSTRAINT FK_RECEPTIONEAZA_COMANDA;
+
+ALTER TABLE RECEPTIONEAZA
+ADD CONSTRAINT FK_RECEPTIONEAZA_COMANDA FOREIGN KEY (ID_Comanda)
+REFERENCES COMANDA(ID_Comanda) ON DELETE SET NULL;
+
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (729462, 6731983147, DATE '2022-01-15', 'Livrata', 100);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (378261, 4729864671, DATE '2022-01-18', 'Livrata', 200);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (382394, 3287346409, DATE '2023-01-21', 'Livrata', 150);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (402864, 4682289382, DATE '2023-01-25', 'Anulata', 300);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (738621, 5643764201, DATE '2023-01-28', 'Livrata', 250);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (378261, 6721983197, DATE '2023-02-01', 'Livrata', 100);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (729462, 5732964683, DATE '2023-02-03', 'Livrata', 200);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (382394, 4987346490, DATE '2023-02-05', 'Livrata', 150);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (402864, 4182289352, DATE '2023-02-08', 'Anulata', 300);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (738621, 5343764210, DATE '2023-02-10', 'Livrata', 250);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (378261, 6021983147, DATE '2024-02-12', 'Livrata', 100);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (729462, 5729864672, DATE '2024-02-14', 'Anulata', 200);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (402864, 5287346410, DATE '2024-02-16', 'Livrata', 150);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (382394, 4782289383, DATE '2024-02-18', 'Livrata', 250);
+INSERT INTO RECEPTIONEAZA (ID_Furnizor, ID_Comanda, Data_Primire, Stare_Comanda, Cantitate) VALUES (738621, 5643764211, DATE '2024-02-20', 'Anulata', 150);
+
+select * from RECEPTIONEAZA;
+
+CREATE TABLE LUCREAZA(
+    ID_Angajat NUMBER(5),
+    ID_Magazin NUMBER(5),
+    Pozitie VARCHAR2(100),
+    CONSTRAINT PK_LUCREAZA PRIMARY KEY (ID_Angajat, ID_Magazin),
+    CONSTRAINT FK_LUCREAZA_ANGAJAT FOREIGN KEY (ID_Angajat) REFERENCES ANGAJAT(ID_Angajat),
+    CONSTRAINT FK_LUCREAZA_MAGAZIN FOREIGN KEY (ID_Magazin) REFERENCES MAGAZIN(ID_Magazin)
+);
+
+ALTER TABLE LUCREAZA DROP CONSTRAINT FK_LUCREAZA_ANGAJAT;
+
+ALTER TABLE LUCREAZA
+ADD CONSTRAINT FK_LUCREAZA_ANGAJAT FOREIGN KEY (ID_Angajat)
+REFERENCES ANGAJAT(ID_Angajat) ON DELETE SET NULL;
+
+ALTER TABLE LUCREAZA DROP CONSTRAINT FK_LUCREAZA_MAGAZIN;
+
+ALTER TABLE LUCREAZA
+ADD CONSTRAINT FK_LUCREAZA_MAGAZIN FOREIGN KEY (ID_Magazin)
+REFERENCES MAGAZIN(ID_Magazin) ON DELETE SET NULL;
+
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (101, 47644, 'Vanzator');
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (102, 28637, 'Casier');
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (103, 52831, 'Vanzator');
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (104, 17634, 'Casier');
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (105, 34902, 'Vanzator');
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (106, 52831, 'Casier');
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (107, 17634, 'Vanzator');
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (108, 17634, 'Casier');
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (109, 28637, 'Vanzator');
+INSERT INTO LUCREAZA (ID_Angajat, ID_Magazin, Pozitie) VALUES (110, 34902, 'Casier');
+
+select * from LUCREAZA;
+
+CREATE TABLE VINDE(
+    ID_Angajat NUMBER(5),
+    ID_Vanzare NUMBER(10),
+    ID_Client NUMBER(5),
+    CONSTRAINT PK_VINDE PRIMARY KEY (ID_Angajat, ID_Vanzare, ID_Client),
+    CONSTRAINT FK_VINDE_ANGAJAT FOREIGN KEY (ID_Angajat) REFERENCES ANGAJAT(ID_Angajat),
+    CONSTRAINT FK_VINDE_VANZARE FOREIGN KEY (ID_Vanzare) REFERENCES VANZARE(ID_Vanzare),
+    CONSTRAINT FK_VINDE_CLIENT FOREIGN KEY (ID_Client) REFERENCES CLIENT(ID_Client)
+);
+
+ALTER TABLE VINDE DROP CONSTRAINT FK_VINDE_ANGAJAT;
+
+ALTER TABLE VINDE
+ADD CONSTRAINT FK_VINDE_ANGAJAT FOREIGN KEY (ID_Angajat)
+REFERENCES ANGAJAT(ID_Angajat) ON DELETE SET NULL;
+
+ALTER TABLE VINDE DROP CONSTRAINT FK_VINDE_VANZARE;
+
+ALTER TABLE VINDE
+ADD CONSTRAINT FK_VINDE_VANZARE FOREIGN KEY (ID_Vanzare)
+REFERENCES VANZARE(ID_Vanzare) ON DELETE SET NULL;
+
+ALTER TABLE VINDE DROP CONSTRAINT FK_VINDE_CLIENT;
+
+ALTER TABLE VINDE
+ADD CONSTRAINT FK_VINDE_CLIENT FOREIGN KEY (ID_Client)
+REFERENCES CLIENT(ID_Client) ON DELETE SET NULL;
+
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (101, 94696243, 3576);
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (101, 55315628, 6326);
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (102, 32153543, 7983);
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (101, 74523695, 1965);
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (103, 10826538, 5864);
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (109, 48046263, 1029);
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (109, 85780893, 8028);
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (104, 17854032, 4920);
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (104, 25684596, 2439);
+INSERT INTO VINDE (ID_Angajat, ID_Vanzare, ID_Client) VALUES (105, 63415764, 9254);
+
+select * from VINDE;
